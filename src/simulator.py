@@ -1,4 +1,6 @@
 # This module contains functions and classes for the main algorithm of generating a simulator.
+
+
 import numpy as np
 from backlog import Backlog
 from work_item import WorkItem
@@ -37,39 +39,48 @@ class ReleasePlanSimulator():
         return simulation_dict
 
 
-    # TODO
+  
     def NPV(self, cashflow, rate):
         npv =  npf.npv(rate, cashflow)
         return npv
 
 
-    def calculate_cashflow(self, s: ReleaseScenario, value_simulation):
+
+    def calculate_npv(self, s:ReleaseScenario, n):
         cashflow = []
-        #cashflow[0] = sum of value of all work items delivered in period 0
-        #cashflow[1] = cashflow[0] + value of workitems delivered in 1
-        for release in s:
-            sum = 0
-            for item in release:
-                item_period = s.get_index(release)
-                val = value_simulation[item][item_period]
-                sum += val
-            cashflow.append(sum)
-        return cashflow
+        p_sum = []
+        for period in s:
+            period_sum = 0
+            for item in period:
+                val = self.value_simulation[item][n]
+                period_sum += val
+            p_sum.append(period_sum)
+        for i in range(len(p_sum)):
+            if (i == 0):
+                total = p_sum[0]
+                cashflow.append(total)
+            else:
+                total = p_sum[i] + p_sum[i-1]
+                cashflow.append(total)
+           
 
-
-
+        npv = npf.npv(self.r, cashflow)
+        return npv
 
 
     # OK
     def punctuality(self, s:ReleaseScenario, p: ReleasePlan):
 
         nbr_late = 0
-        work_items = s.get_work_items()
-        for w in work_items:
-            if (s.get_delivery_period(w) > p.get_delivery_period(w)):
+        total = p.get_length()
+        for w in p.get_work_items():
+            if w in s.get_work_items():
+                if (s.get_delivery_period(w) > p.get_delivery_period(w)):
+                    nbr_late += 1
+            if w not in s.get_work_items():
                 nbr_late += 1
 
-        punctuality = (len(work_items) - nbr_late) / len(work_items)
+        punctuality = (total - nbr_late)/total
 
         return punctuality
 
@@ -113,18 +124,25 @@ class ReleasePlanSimulator():
         ws = self.generateWorkSequence(p)
 
         s = ReleaseScenario()#check 
+        for period in range(len(self.capacity)):
+            s.add_release([])
+        
 
         i = 0
         sumCapacity = self.capacity[i]
         sumEffort = 0
-        for w in ws:
+        for j in range(len(ws)):
+            w = ws[j]
             sumEffort = sumEffort + self.effort_simulation[w][n]
-            while(sumEffort > sumCapacity):
-                i = i + 1
-                sumCapacity = sumCapacity + self.capacity[i]
-                s.add_release([])
+            
+            #print(sumEffort, sumCapacity, i)
+            while (sumEffort > sumCapacity):
+                if(i < len(self.capacity) - 1):
+                    i = i + 1
+                    sumCapacity = sumCapacity + self.capacity[i]
+            
             s.releases[i-1].append(w)
-
+        
         return s
 
     # OK
@@ -132,14 +150,23 @@ class ReleasePlanSimulator():
     def evaluateReleasePlan(self, p: ReleasePlan):
         sumNPV = 0
         sumPunctuality = 0
-
         for n in range(self.N):
             s = self.generateReleaseScenario(n, p)
-            sumNPV = sumNPV + self.NPV(n, s)
+
+            npv = self.calculate_npv(s, n)
+            sumNPV = sumNPV + npv
             sumPunctuality = sumPunctuality + self.punctuality(s, p)
 
         return [(sumNPV/self.N), (sumPunctuality/self.N)]
 
+
+    def npv_distribution(self, p:ReleasePlan):
+        npv_list = []
+        for n in range(self.N):
+            s= self.generateReleaseScenario(n,p)
+            npv = self.calculate_npv(s,n)
+            npv_list.append(npv)
+        return npv_list
 
 
 

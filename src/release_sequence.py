@@ -2,8 +2,8 @@ from model import WorkItem
 
 
 class ReleaseSequence():
-    def __init__(self):
-        self.releases = []
+    def __init__(self,list):
+        self.releases = list
 
     def add_release(self, release: list):
         self.releases.append(release)
