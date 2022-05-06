@@ -8,7 +8,7 @@ from simulator import ReleasePlanSimulator
 #install openpyxl
 import seaborn as sns
 import matplotlib.pyplot as plt
-
+import time
 
 #read file
 file = pd.ExcelFile('./src/Council-Backlog-Raw.xlsx')
@@ -96,38 +96,46 @@ for i in period_list3:
     release_plan3.add_release(item_list)
 
 
-
-
 sim = ReleasePlanSimulator(backlog, planning_horizon, capacity, investment_horizon, discount_rate, budget, 100000)
+
+start = time.time()
 e = sim.evaluateReleasePlan(release_plan)
 print(e)
 npv_dis = sim.npv_distribution(release_plan)
+end1 = time.time()
+print("Execution time of the program is- ", end1-start)
 
 e2 = sim.evaluateReleasePlan(release_plan2)
 print(e2)
+end2 = time.time()
 npv_dis2 = sim.npv_distribution(release_plan2)
+print("Execution time of the program is- ", end2-end1)
 
 e3 = sim.evaluateReleasePlan(release_plan3)
 print(e3)
+end3 = time.time()
 npv_dis3 = sim.npv_distribution(release_plan3)
+print("Execution time of the program is- ", end3-end2)
 
 
 sns.displot(npv_dis, kde=True)
-plt.title('NPV distribution over 100000 iterations: Release Plan A')
+plt.title('NPV distribution over 10000 iterations: Release Plan I')
 plt.xlabel('NPV')
 plt.ylabel('Count')
 plt.show()
+
 
 sns.displot(npv_dis2, kde=True)
-plt.title('NPV distribution over 100000 iterations: Release Plan B')
+plt.title('NPV distribution over 10000 iterations: Release Plan II')
 plt.xlabel('NPV')
 plt.ylabel('Count')
 plt.show()
 
-'''
+
 sns.displot(npv_dis3, kde=True)
-plt.title('NPV distribution over 100000 iterations: Release Plan C')
+plt.title('NPV distribution over 10000 iterations: Release Plan III')
 plt.xlabel('NPV')
 plt.ylabel('Count')
 plt.show()
-'''
+
+
